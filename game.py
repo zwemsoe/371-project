@@ -1,7 +1,8 @@
+import socket
 import pygame
 from pygame.locals import *
 import time
-import socket
+import random
 
 class Client:
     def __init__(self):
@@ -25,71 +26,105 @@ class Client:
 
 
 # game logic
-# probably need Grid, Snake, Apple, and some other classes
+# probably need Grid, Snake, Resource, and some other classes
 # run game
+
+BLOCK_SIZE = 40
+BOARD_SIZE = (800, 800)
+BOARD_COLOR = (155, 155, 155)
+
+class Resource:
+    def __init__(self, parent_screen):
+        self.parent_screen = parent_screen
+        self.image = pygame.image.load("resources/diamond.png").convert_alpha()
+        self.x = 120
+        self.y = 120
+
+    def draw(self):
+        self.parent_screen.blit(self.image, (self.x, self.y))
+
+    def move(self):
+        self.x = random.randint(1, int(BOARD_SIZE[0] / BLOCK_SIZE)) * BLOCK_SIZE
+        self.y = random.randint(1, int(BOARD_SIZE[1] / BLOCK_SIZE)) * BLOCK_SIZE
+
 class Snake:
-    def __init__(self, surface):
-        self.parent_screen = surface # take in and store the screen to be able to refresh it later
-        self.block = pygame.image.load("resources/block.jpg").convert() # load block image into named variable
-        self.x = 40 # starting x
-        self.y = 40 # starting y
+    def __init__(self, surface, length):
+        self.parent_screen = surface  # take in and store the screen to be able to refresh it later
+        self.image = pygame.image.load("resources/greenblock.png").convert()  # load block image into named variable
         self.direction = 'right'
 
-    def move_up(self):
+        self.length = length
+        self.x = [BLOCK_SIZE] * length  # starting x
+        self.y = [BLOCK_SIZE] * length  # starting y
+
+    def set_dir_up(self):
         self.direction = 'up'
 
-    def move_down(self):
+    def set_dir_down(self):
         self.direction = 'down'
 
-    def move_left(self):
+    def set_dir_left(self):
         self.direction = 'left'
 
-    def move_right(self):
+    def set_dir_right(self):
         self.direction = 'right'
 
-    def walk(self):
+    def move(self):
+        # update body
+        for i in range(self.length - 1, 0, -1):  # iterate from the back of the snake
+            self.x[i] = self.x[i - 1]  # set snake x position to the 1 position closer to the head
+            self.y[i] = self.y[i - 1]  # set snake y position to the 1 position closer to the head
+
         if self.direction == 'up':
-            self.y -= 40
+            self.y[0] -= BLOCK_SIZE
         if self.direction == 'down':
-            self.y += 40
+            self.y[0] += BLOCK_SIZE
         if self.direction == 'left':
-            self.x -= 40
+            self.x[0] -= BLOCK_SIZE
         if self.direction == 'right':
-            self.x += 40
+            self.x[0] += BLOCK_SIZE
+
         self.draw()
 
     def draw(self):
-        self.parent_screen.fill((255, 176, 227)) # fill screen with color
-        self.parent_screen.blit(self.block, (self.x, self.y)) # draw block on screen
-        pygame.display.flip() # redraw/refresh UI window
+        for i in range(self.length):
+            self.parent_screen.blit(self.image, (self.x[i], self.y[i]))  # draw each snake block on screen
 
 
 class Game:
     def __init__(self):
         pygame.init()
-        self.surface = pygame.display.set_mode((800, 800)) # create screen with size x, y
-        self.snake = Snake(self.surface)
+        self.surface = pygame.display.set_mode(BOARD_SIZE)  # create screen with size x, y
+        self.snake = Snake(self.surface, 5)
         self.snake.draw()
+        self.resource = Resource(self.surface)
+        self.resource.draw()
         self.running = True
+
+    def update(self):
+        self.surface.fill(BOARD_COLOR)  # fill screen with color
+        self.snake.move()  # moves snake and draws it
+        self.resource.draw()  # draw resource
+        pygame.display.flip()  # redraw/refresh UI window here
 
     def run(self):
         while self.running:
             for event in pygame.event.get():
-                if event.type == QUIT:
+                if event.type == QUIT:  # exit if close button pressed
                     self.running = False
                 if event.type == KEYDOWN:
-                    if event.key == K_ESCAPE:
+                    if event.key == K_ESCAPE:  # exit if esc button pressed
                         self.running = False
                     if event.key == K_UP:
-                        self.snake.move_up()
+                        self.snake.set_dir_up()
                     if event.key == K_DOWN:
-                        self.snake.move_down()
+                        self.snake.set_dir_down()
                     if event.key == K_LEFT:
-                        self.snake.move_left()
+                        self.snake.set_dir_left()
                     if event.key == K_RIGHT:
-                        self.snake.move_right()
-            self.snake.walk()
-            time.sleep(.5)
+                        self.snake.set_dir_right()
+            self.update()
+            time.sleep(.5)  # wait half a second between updates
 
 
 if __name__ == '__main__':
