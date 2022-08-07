@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+import time
 import socket
 
 class Client:
@@ -22,44 +23,75 @@ class Client:
         except socket.error as e:
             return str(e)
 
-def draw_block():
-    surface.fill((255, 176, 227))
-    surface.blit(block, (block_x, block_y))
-    pygame.display.flip()
 
 # game logic
 # probably need Grid, Snake, Apple, and some other classes
 # run game
+class Snake:
+    def __init__(self, surface):
+        self.parent_screen = surface # take in and store the screen to be able to refresh it later
+        self.block = pygame.image.load("resources/block.jpg").convert() # load block image into named variable
+        self.x = 40 # starting x
+        self.y = 40 # starting y
+        self.direction = 'right'
+
+    def move_up(self):
+        self.direction = 'up'
+
+    def move_down(self):
+        self.direction = 'down'
+
+    def move_left(self):
+        self.direction = 'left'
+
+    def move_right(self):
+        self.direction = 'right'
+
+    def walk(self):
+        if self.direction == 'up':
+            self.y -= 40
+        if self.direction == 'down':
+            self.y += 40
+        if self.direction == 'left':
+            self.x -= 40
+        if self.direction == 'right':
+            self.x += 40
+        self.draw()
+
+    def draw(self):
+        self.parent_screen.fill((255, 176, 227)) # fill screen with color
+        self.parent_screen.blit(self.block, (self.x, self.y)) # draw block on screen
+        pygame.display.flip() # redraw/refresh UI window
+
+
+class Game:
+    def __init__(self):
+        pygame.init()
+        self.surface = pygame.display.set_mode((800, 800)) # create screen with size x, y
+        self.snake = Snake(self.surface)
+        self.snake.draw()
+        self.running = True
+
+    def run(self):
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    self.running = False
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        self.running = False
+                    if event.key == K_UP:
+                        self.snake.move_up()
+                    if event.key == K_DOWN:
+                        self.snake.move_down()
+                    if event.key == K_LEFT:
+                        self.snake.move_left()
+                    if event.key == K_RIGHT:
+                        self.snake.move_right()
+            self.snake.walk()
+            time.sleep(.5)
+
+
 if __name__ == '__main__':
-    pygame.init()
-
-    surface = pygame.display.set_mode((800, 800))
-    surface.fill((255, 176, 227))
-
-    block = pygame.image.load("resources/block.jpg").convert()
-    block_x, block_y = 0, 0
-
-    surface.blit(block, (block_x, block_y))
-    pygame.display.flip() # refresh UI window
-
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                running = False
-            elif event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    running = False
-                if event.key == K_UP:
-                    block_y -= 40
-                    draw_block()
-                if event.key == K_DOWN:
-                    block_y += 40
-                    draw_block()
-                if event.key == K_LEFT:
-                    block_x -= 40
-                    draw_block()
-                if event.key == K_RIGHT:
-                    block_x += 40
-                    draw_block()
-
+    game = Game()
+    game.run()
