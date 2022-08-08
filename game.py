@@ -64,6 +64,7 @@ class Snake:
         self.image_head = pygame.image.load("resources/greenhead.png").convert()  # load head image
         self.image_body = pygame.image.load("resources/greenblock.png").convert()  # load body image
         self.direction = 'right'
+        self.next_direction = 'right'
 
         self.length = 1
         self.x = [BLOCK_SIZE]  # starting x loc
@@ -71,19 +72,19 @@ class Snake:
 
     def set_dir_up(self):
         if self.direction != 'down':
-            self.direction = 'up'
+            self.next_direction = 'up'
 
     def set_dir_down(self):
         if self.direction != 'up':
-            self.direction = 'down'
+            self.next_direction = 'down'
 
     def set_dir_left(self):
         if self.direction != 'right':
-            self.direction = 'left'
+            self.next_direction = 'left'
 
     def set_dir_right(self):
         if self.direction != 'left':
-            self.direction = 'right'
+            self.next_direction = 'right'
 
     def move(self):
         # update body
@@ -91,6 +92,7 @@ class Snake:
             self.x[i] = self.x[i - 1]  # set snake x position to the 1 position closer to the head
             self.y[i] = self.y[i - 1]  # set snake y position to the 1 position closer to the head
 
+        self.direction = self.next_direction
         if self.direction == 'up':
             self.y[0] -= BLOCK_SIZE
         if self.direction == 'down':
