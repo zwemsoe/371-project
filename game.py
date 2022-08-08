@@ -95,12 +95,20 @@ class Snake:
         self.direction = self.next_direction
         if self.direction == 'up':
             self.y[0] -= BLOCK_SIZE
+            if self.y[0] < 0:
+                self.y[0] += BOARD_SIZE[1]
         if self.direction == 'down':
             self.y[0] += BLOCK_SIZE
+            if self.y[0] >= BOARD_SIZE[1]:
+                self.y[0] -= BOARD_SIZE[1]
         if self.direction == 'left':
             self.x[0] -= BLOCK_SIZE
+            if self.x[0] < 0:
+                self.x[0] += BOARD_SIZE[0]
         if self.direction == 'right':
             self.x[0] += BLOCK_SIZE
+            if self.x[0] >= BOARD_SIZE[0]:
+                self.x[0] -= BOARD_SIZE[0]
 
         self.draw()
 
