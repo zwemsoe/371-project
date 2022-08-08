@@ -33,6 +33,7 @@ class Client:
 BLOCK_SIZE = 40
 BOARD_SIZE = (1000, 800)
 BOARD_COLOR = (155, 155, 155)
+FONT_COLOR = (255, 255, 255)
 
 
 class Resource:
@@ -126,11 +127,17 @@ class Game:
         self.surface.fill(BOARD_COLOR)  # fill screen with color
         self.snake.move()  # moves snake and draws it
         self.resource.draw()  # draw resource
+        self.display_score()
         pygame.display.flip()  # redraw/refresh UI window here
 
         if self.is_collision(self.snake.x[0], self.snake.y[0], self.resource.x, self.resource.y):
             self.snake.increase_length()
             self.resource.move()
+
+    def display_score(self):
+        font = pygame.font.SysFont('arial', 30)
+        score = font.render(f"Score: {self.snake.length}", True, FONT_COLOR)
+        self.surface.blit(score, (BOARD_SIZE[0] - 150, 10))
 
     def run(self):
         self.running = True
