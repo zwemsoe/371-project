@@ -4,6 +4,7 @@ from pygame.locals import *
 import time
 import random
 
+
 class Client:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -30,22 +31,31 @@ class Client:
 # run game
 
 BLOCK_SIZE = 40
-BOARD_SIZE = (800, 800)
+BOARD_SIZE = (1000, 800)
 BOARD_COLOR = (155, 155, 155)
+
 
 class Resource:
     def __init__(self, parent_screen):
         self.parent_screen = parent_screen
         self.image = pygame.image.load("resources/diamond.png").convert_alpha()
-        self.x = 120
-        self.y = 120
+        self.x = random.randint(10, int(BOARD_SIZE[0] / BLOCK_SIZE) - 11) * BLOCK_SIZE
+        self.y = random.randint(8, int(BOARD_SIZE[1] / BLOCK_SIZE) - 9) * BLOCK_SIZE
 
     def draw(self):
         self.parent_screen.blit(self.image, (self.x, self.y))
 
     def move(self):
-        self.x = random.randint(1, int(BOARD_SIZE[0] / BLOCK_SIZE)) * BLOCK_SIZE
-        self.y = random.randint(1, int(BOARD_SIZE[1] / BLOCK_SIZE)) * BLOCK_SIZE
+        tmp_x = random.randint(0, int(BOARD_SIZE[0] / BLOCK_SIZE) - 1) * BLOCK_SIZE
+        tmp_y = random.randint(0, int(BOARD_SIZE[1] / BLOCK_SIZE) - 1) * BLOCK_SIZE
+
+        while self.x == tmp_x and self.y == tmp_y:
+            tmp_x = random.randint(0, int(BOARD_SIZE[0] / BLOCK_SIZE) - 1) * BLOCK_SIZE
+            tmp_y = random.randint(0, int(BOARD_SIZE[1] / BLOCK_SIZE) - 1) * BLOCK_SIZE
+
+        self.x = tmp_x
+        self.y = tmp_y
+
 
 class Snake:
     def __init__(self, surface, length):
@@ -86,6 +96,11 @@ class Snake:
 
         self.draw()
 
+    def increase_length(self):
+        self.length += 1
+        self.x.append(-1)
+        self.y.append(-1)
+
     def draw(self):
         for i in range(self.length):
             self.parent_screen.blit(self.image, (self.x[i], self.y[i]))  # draw each snake block on screen
@@ -95,11 +110,17 @@ class Game:
     def __init__(self):
         pygame.init()
         self.surface = pygame.display.set_mode(BOARD_SIZE)  # create screen with size x, y
-        self.snake = Snake(self.surface, 5)
+        self.snake = Snake(self.surface, 1)
         self.snake.draw()
         self.resource = Resource(self.surface)
         self.resource.draw()
-        self.running = True
+        self.running = False
+
+    def is_collision(self, s_x, s_y, r_x, r_y):  # can pass snake 2 here, or do it on server side
+        if s_x == r_x:
+            if s_y == r_y:
+                return True
+        return False
 
     def update(self):
         self.surface.fill(BOARD_COLOR)  # fill screen with color
@@ -107,7 +128,12 @@ class Game:
         self.resource.draw()  # draw resource
         pygame.display.flip()  # redraw/refresh UI window here
 
+        if self.is_collision(self.snake.x[0], self.snake.y[0], self.resource.x, self.resource.y):
+            self.snake.increase_length()
+            self.resource.move()
+
     def run(self):
+        self.running = True
         while self.running:
             for event in pygame.event.get():
                 if event.type == QUIT:  # exit if close button pressed
@@ -124,7 +150,7 @@ class Game:
                     if event.key == K_RIGHT:
                         self.snake.set_dir_right()
             self.update()
-            time.sleep(.5)  # wait half a second between updates
+            time.sleep(.2)  # wait half a second between updates
 
 
 if __name__ == '__main__':
