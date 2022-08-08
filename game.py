@@ -61,7 +61,8 @@ class Resource:
 class Snake:
     def __init__(self, surface, length):
         self.parent_screen = surface  # take in and store the screen to be able to refresh it later
-        self.image = pygame.image.load("resources/greenblock.png").convert()  # load block image into named variable
+        self.image_head = pygame.image.load("resources/greenhead.png").convert()  # load head image
+        self.image_body = pygame.image.load("resources/greenblock.png").convert()  # load body image
         self.direction = 'right'
 
         self.length = length
@@ -103,8 +104,9 @@ class Snake:
         self.y.append(-1)
 
     def draw(self):
-        for i in range(self.length):
-            self.parent_screen.blit(self.image, (self.x[i], self.y[i]))  # draw each snake block on screen
+        self.parent_screen.blit(self.image_head, (self.x[0], self.y[0]))  # draw snake head
+        for i in range(1, self.length):
+            self.parent_screen.blit(self.image_body, (self.x[i], self.y[i]))  # draw each body blocks
 
 
 class Game:
@@ -157,7 +159,7 @@ class Game:
                     if event.key == K_RIGHT:
                         self.snake.set_dir_right()
             self.update()
-            time.sleep(.2)  # wait half a second between updates
+            time.sleep(.2)  # wait between updates
 
 
 if __name__ == '__main__':
