@@ -32,7 +32,7 @@ class Client:
 
 BLOCK_SIZE = 40
 BOARD_SIZE = (1000, 800)
-BOARD_COLOR = (155, 155, 155)
+BOARD_COLOR = (185, 185, 185)
 FONT_COLOR = (255, 255, 255)
 
 
@@ -59,27 +59,31 @@ class Resource:
 
 
 class Snake:
-    def __init__(self, surface, length):
+    def __init__(self, surface):
         self.parent_screen = surface  # take in and store the screen to be able to refresh it later
         self.image_head = pygame.image.load("resources/greenhead.png").convert()  # load head image
         self.image_body = pygame.image.load("resources/greenblock.png").convert()  # load body image
         self.direction = 'right'
 
-        self.length = length
-        self.x = [BLOCK_SIZE] * length  # starting x
-        self.y = [BLOCK_SIZE] * length  # starting y
+        self.length = 1
+        self.x = [BLOCK_SIZE]  # starting x loc
+        self.y = [BLOCK_SIZE]  # starting y loc
 
     def set_dir_up(self):
-        self.direction = 'up'
+        if self.direction != 'down':
+            self.direction = 'up'
 
     def set_dir_down(self):
-        self.direction = 'down'
+        if self.direction != 'up':
+            self.direction = 'down'
 
     def set_dir_left(self):
-        self.direction = 'left'
+        if self.direction != 'right':
+            self.direction = 'left'
 
     def set_dir_right(self):
-        self.direction = 'right'
+        if self.direction != 'left':
+            self.direction = 'right'
 
     def move(self):
         # update body
@@ -100,8 +104,8 @@ class Snake:
 
     def increase_length(self):
         self.length += 1
-        self.x.append(-1)
-        self.y.append(-1)
+        self.x.append(0)  # give it any value, will update next iteration
+        self.y.append(0)  # give it any value, will update next iteration
 
     def draw(self):
         self.parent_screen.blit(self.image_head, (self.x[0], self.y[0]))  # draw snake head
@@ -113,17 +117,20 @@ class Game:
     def __init__(self):
         pygame.init()
         self.surface = pygame.display.set_mode(BOARD_SIZE)  # create screen with size x, y
-        self.snake = Snake(self.surface, 1)
+        self.snake = Snake(self.surface)
         self.snake.draw()
         self.resource = Resource(self.surface)
         self.resource.draw()
-        self.running = False
 
-    def is_collision(self, s_x, s_y, r_x, r_y):  # can pass snake 2 here, or do it on server side
-        if s_x == r_x:
-            if s_y == r_y:
+    def is_collision(self, x1, y1, x2, y2):  # can pass snake 2 here, or do it on server side
+        if x1 == x2:
+            if y1 == y2:
                 return True
         return False
+
+    def reset(self):
+        self.snake = Snake(self.surface)
+        self.resource = Resource(self.surface)
 
     def update(self):
         self.surface.fill(BOARD_COLOR)  # fill screen with color
@@ -132,33 +139,61 @@ class Game:
         self.display_score()
         pygame.display.flip()  # redraw/refresh UI window here
 
+        # snake eating resource
         if self.is_collision(self.snake.x[0], self.snake.y[0], self.resource.x, self.resource.y):
             self.snake.increase_length()
             self.resource.move()
+
+        # snake colliding with itself
+        for i in range(4, self.snake.length):  # can't collide with itself until at least the 5th element (idx: 4)
+            if self.is_collision(self.snake.x[0], self.snake.y[0], self.snake.x[i], self.snake.y[i]):
+                raise "Collision Occurred!"
 
     def display_score(self):
         font = pygame.font.SysFont('arial', 30)
         score = font.render(f"Score: {self.snake.length}", True, FONT_COLOR)
         self.surface.blit(score, (BOARD_SIZE[0] - 150, 10))
 
+    def show_game_over(self):
+        self.surface.fill(BOARD_COLOR)
+        font = pygame.font.SysFont('arial', 30)
+        line1 = font.render(f"Game is over! Your score is {self.snake.length}", True, FONT_COLOR)
+        self.surface.blit(line1, (200, 300))
+        line2 = font.render("To play again press Enter. To exit press Escape!", True, FONT_COLOR)
+        self.surface.blit(line2, (200, 350))
+        pygame.display.flip()
+
     def run(self):
-        self.running = True
-        while self.running:
+        running = True
+        pause = False
+
+        while running:
             for event in pygame.event.get():
                 if event.type == QUIT:  # exit if close button pressed
-                    self.running = False
+                    running = False
                 if event.type == KEYDOWN:
                     if event.key == K_ESCAPE:  # exit if esc button pressed
-                        self.running = False
-                    if event.key == K_UP:
-                        self.snake.set_dir_up()
-                    if event.key == K_DOWN:
-                        self.snake.set_dir_down()
-                    if event.key == K_LEFT:
-                        self.snake.set_dir_left()
-                    if event.key == K_RIGHT:
-                        self.snake.set_dir_right()
-            self.update()
+                        running = False
+                    if event.key == K_RETURN:
+                        # pause = not pause  # can pause the game, disable for multiplayer
+                        pause = False
+                    if not pause:
+                        if event.key == K_UP:
+                            self.snake.set_dir_up()
+                        if event.key == K_DOWN:
+                            self.snake.set_dir_down()
+                        if event.key == K_LEFT:
+                            self.snake.set_dir_left()
+                        if event.key == K_RIGHT:
+                            self.snake.set_dir_right()
+            try:
+                if not pause:
+                    self.update()
+            except Exception as e:
+                self.show_game_over()
+                pause = True
+                self.reset()
+
             time.sleep(.2)  # wait between updates
 
 
