@@ -12,13 +12,14 @@ players = {}
 def client_thread(conn, player):
     global player_count
     global game
+    global players
     print(f"starting player-{player} thread")
     # send back player id
     conn.send(str.encode(str(player)))
     while True:
         try:
             data = conn.recv(4096).decode()
-            print(f"received: {data}")
+            print(f"received from {player}: {data}")
             if game.ready:
                 if data != "game_state":
                     if data == 'quit':

@@ -108,29 +108,36 @@ class Game:
 
 
     def update(self):
-        self.p1.move()  # moves snake and draws it
-        self.p2.move() 
+        if not self.over:
+            self.p1.move()  # moves snake and draws it
+            self.p2.move() 
 
-        # snake eating resource
-        if is_collision(self.p1.x[0], self.p1.y[0], self.resource.x, self.resource.y):
-            self.p1.increase_length()
-            self.resource.move()
-            self.scores[0] += 1
-        
-        if is_collision(self.p2.x[0], self.p2.y[0], self.resource.x, self.resource.y):
-            self.p2.increase_length()
-            self.resource.move()
-            self.scores[1] += 1
+            # snake eating resource
+            if is_collision(self.p1.x[0], self.p1.y[0], self.resource.x, self.resource.y):
+                self.p1.increase_length()
+                self.resource.move()
+                self.scores[0] += 1
+            
+            if is_collision(self.p2.x[0], self.p2.y[0], self.resource.x, self.resource.y):
+                self.p2.increase_length()
+                self.resource.move()
+                self.scores[1] += 1
 
-        
-        # snake collide head to head
-        self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[0], self.p2.y[0])
+            
+            # snake collide head to head
+            self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[0], self.p2.y[0])
+            if self.over:
+                return
 
-        # snake colliding with itself or the body of the other snake
-        for i in range(2, self.p1.length):  # can't collide with itself until at least the 5th element (idx: 4)
-            self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p1.x[i], self.p1.y[i]) or is_collision(self.p2.x[0], self.p2.y[0], self.p1.x[i], self.p1.y[i])
-        
-        for i in range(2, self.p2.length): 
-            self.over = is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]) or is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[i], self.p2.y[i])
+            # snake colliding with itself or the body of the other snake
+            for i in range(2, self.p1.length):
+                self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p1.x[i], self.p1.y[i]) or is_collision(self.p2.x[0], self.p2.y[0], self.p1.x[i], self.p1.y[i])
+                if self.over:
+                    return
+            
+            for i in range(2, self.p2.length): 
+                self.over = is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]) or is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[i], self.p2.y[i])
+                if self.over:
+                    return
         
         

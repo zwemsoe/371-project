@@ -70,8 +70,8 @@ def game_loop():
     clock = pygame.time.Clock()
     net = Network()
     player_id = int(net.id)
-    result_message = 'Other player has disconnected'
-    speed = 0.2
+    result_message = 'Other player has disconnected.'
+    speed = 0.3
     
     while not over:
         clock.tick(60)
