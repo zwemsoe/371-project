@@ -5,25 +5,39 @@ from constants import *
 import pickle
 
 
-playerCount = 0
-game = {}
+player_count = 0
+game = None
+players = {}
 
 def client_thread(conn, player):
-    print("starting client thread")
+    global player_count
+    global game
+    print(f"starting player-{player} thread")
+    # send back player id
     conn.send(str.encode(str(player)))
     while True:
         try:
             data = conn.recv(4096).decode()
-            # if game.ready:
-            #     if data == "key_event":
-            #         game.handle_key_event(player, data)
-            #     game.update(player)  
-            
+            print(f"received: {data}")
+            if game.ready:
+                if data != "game_state":
+                    if data == 'quit':
+                        game.ready = False
+                        conn.sendall(pickle.dumps(game))
+                        break
+                    game.handle_key_event(player, data)
+                game.update()  
             conn.sendall(pickle.dumps(game))
                     
-        except:
+        except Exception as e:
+            print("server: something went wrong")
+            print(str(e))
             break
     
+    player_count -= 1
+    del players[player]
+    # if 1 player left, start new game
+    game = None if player_count == 0 else Game()
     conn.close()
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -39,13 +53,20 @@ print(f"listening on {SERVER_PORT}")
 while True:
     conn, addr = s.accept()
     print("connected to: ", addr)
-    playerCount += 1
-    player = 0
-    if playerCount < 2:
-        game = Game()
-        print("Creating a new game...")
+    player_count += 1
+    
+    # picking player id
+    player = 1
+    if 1 in players:
+        player = 2
+        players[2] = 1
+    else:
+        players[1] = 1
+
+    if player_count < 2:
+        game = Game() if game is None else game
+        print("creating a new game...")
     else:
         game.ready = True
-        player = 1
-        print("ready")
+        print("both players ready")
     start_new_thread(client_thread, (conn,player))

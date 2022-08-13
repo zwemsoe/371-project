@@ -1,13 +1,11 @@
 from constants import *
 import random
-import pygame
 
 # helpers
 def is_collision(x1, y1, x2, y2):  # can pass snake 2 here, or do it on server side
     return x1 == x2 and y1 == y2
 
-
-# classes
+# game objects
 class Resource:
     def __init__(self):
         self.x = random.randint(10, int(BOARD_SIZE[0] / BLOCK_SIZE) - 11) * BLOCK_SIZE
@@ -29,8 +27,8 @@ class Snake:
         self.direction = 'right'
         self.next_direction = 'right'
         self.length = 1
-        self.x = [random.randint(10, int(BOARD_SIZE[0] / BLOCK_SIZE) - 11) * BLOCK_SIZE]
-        self.y = [random.randint(8, int(BOARD_SIZE[1] / BLOCK_SIZE) - 9) * BLOCK_SIZE]
+        self.x = [random.randint(3, int(BOARD_SIZE[0] / BLOCK_SIZE) - 11) * BLOCK_SIZE]
+        self.y = [random.randint(2, int(BOARD_SIZE[1] / BLOCK_SIZE) - 9) * BLOCK_SIZE]
 
     def set_dir_up(self):
         if self.direction != 'down':
@@ -84,26 +82,26 @@ class Game:
         self.resource = Resource()
         self.ready = False
         self.scores = [0, 0]
-        self.game_over = False
+        self.over = False
     
     def handle_key_event(self, player_num, key):
-        if player_num == 0:
-            if key == 'up':
+        if player_num == 1:
+            if key == 'u':
                 self.p1.set_dir_up()
-            elif key == 'down':
+            elif key == 'd':
                 self.p1.set_dir_down()
-            elif key == 'left':
+            elif key == 'l':
                 self.p1.set_dir_left()
-            elif key == 'right':
+            elif key == 'r':
                 self.p1.set_dir_right()
-        elif player_num == 1:
-            if key == 'up':
+        elif player_num == 2:
+            if key == 'u':
                 self.p2.set_dir_up()
-            elif key == 'down':
+            elif key == 'd':
                 self.p2.set_dir_down()
-            elif key == 'left':
+            elif key == 'l':
                 self.p2.set_dir_left()
-            elif key == 'right':
+            elif key == 'r':
                 self.p2.set_dir_right()
         else:
             raise "Invalid player number"
@@ -124,17 +122,15 @@ class Game:
             self.resource.move()
             self.scores[1] += 1
 
-        # snake colliding with itself
-        for i in range(4, self.p1.length):  # can't collide with itself until at least the 5th element (idx: 4)
-            if is_collision(self.p1.x[0], self.p1.y[0], self.p1.x[i], self.p1.y[i]):
-                 self.game_over = True
-            if is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]):
-                self.game_over = True
         
-        for i in range(4, self.p2.length): 
-            if is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]):
-                self.game_over = True
+        # snake collide head to head
+        self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[0], self.p2.y[0])
+
+        # snake colliding with itself or the body of the other snake
+        for i in range(2, self.p1.length):  # can't collide with itself until at least the 5th element (idx: 4)
+            self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p1.x[i], self.p1.y[i]) or is_collision(self.p2.x[0], self.p2.y[0], self.p1.x[i], self.p1.y[i])
         
-        # snake colliding with another snake
-        if is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[0], self.p2.y[0]):
-            self.game_over = True
+        for i in range(2, self.p2.length): 
+            self.over = is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]) or is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[i], self.p2.y[i])
+        
+        
