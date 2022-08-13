@@ -2,9 +2,11 @@ import socket
 from _thread import *
 from game import *
 from constants import *
+import pickle
+
 
 playerCount = 0
-game = 0
+game = {}
 
 def client_thread(conn, player):
     print("starting client thread")
@@ -12,14 +14,12 @@ def client_thread(conn, player):
     while True:
         try:
             data = conn.recv(4096).decode()
-            print(data)
-            reply = 'yo'
             # if game.ready:
-                # if data == "key_event":
-                #     reply = game.play(player)
-                #reply = game.update(player)  
+            #     if data == "key_event":
+            #         game.handle_key_event(player, data)
+            #     game.update(player)  
             
-            conn.sendall(str.encode(str(reply)))
+            conn.sendall(pickle.dumps(game))
                     
         except:
             break

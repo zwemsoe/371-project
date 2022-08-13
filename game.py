@@ -1,6 +1,6 @@
 from constants import *
-import time
 import random
+import pygame
 
 # helpers
 def is_collision(x1, y1, x2, y2):  # can pass snake 2 here, or do it on server side
@@ -84,6 +84,30 @@ class Game:
         self.resource = Resource()
         self.ready = False
         self.scores = [0, 0]
+        self.game_over = False
+    
+    def handle_key_event(self, player_num, key):
+        if player_num == 0:
+            if key == 'up':
+                self.p1.set_dir_up()
+            elif key == 'down':
+                self.p1.set_dir_down()
+            elif key == 'left':
+                self.p1.set_dir_left()
+            elif key == 'right':
+                self.p1.set_dir_right()
+        elif player_num == 1:
+            if key == 'up':
+                self.p2.set_dir_up()
+            elif key == 'down':
+                self.p2.set_dir_down()
+            elif key == 'left':
+                self.p2.set_dir_left()
+            elif key == 'right':
+                self.p2.set_dir_right()
+        else:
+            raise "Invalid player number"
+
 
     def update(self):
         self.p1.move()  # moves snake and draws it
@@ -103,9 +127,14 @@ class Game:
         # snake colliding with itself
         for i in range(4, self.p1.length):  # can't collide with itself until at least the 5th element (idx: 4)
             if is_collision(self.p1.x[0], self.p1.y[0], self.p1.x[i], self.p1.y[i]):
-                raise "Collision Occurred!"
+                 self.game_over = True
             if is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]):
-                raise "Collision Occurred!"
+                self.game_over = True
         
-        return {'p1': self.p1, 'p2': self.p2, 'resource': self.resource, 'scores': self.scores}
-    
+        for i in range(4, self.p2.length): 
+            if is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]):
+                self.game_over = True
+        
+        # snake colliding with another snake
+        if is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[0], self.p2.y[0]):
+            self.game_over = True
