@@ -9,6 +9,7 @@ player_count = 0
 game = None
 players = {}
 
+# thread to handle client socket messages
 def client_thread(conn, player):
     global player_count
     global game
@@ -41,6 +42,7 @@ def client_thread(conn, player):
     game = None if player_count == 0 else Game()
     conn.close()
 
+# open tcp socket on server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
@@ -48,6 +50,7 @@ try:
 except socket.error as e:
     print(str(e))
 
+# allow at most 2 clients to be connected
 s.listen(2)
 print(f"listening on {SERVER_PORT}")  
  
