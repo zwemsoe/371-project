@@ -1,50 +1,15 @@
-import socket
-import pygame
-from pygame.locals import *
-import time
+from constants import *
 import random
 
+# helpers
+def is_collision(x1, y1, x2, y2):  # can pass snake 2 here, or do it on server side
+    return x1 == x2 and y1 == y2
 
-class Client:
-    def __init__(self):
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.addr = ('localhost', 8000)
-
-    def connect(self):
-        try:
-            self.client.connect(self.addr)	
-            return self.client.recv(2048).decode()
-        except Exception as e:
-            print(e)
-
-    def send(self, data):
-        try:
-            self.client.send(str.encode(data))
-            reply = self.client.recv(2048).decode()
-            return reply
-        except socket.error as e:
-            return str(e)
-
-
-# game logic
-# probably need Grid, Snake, Resource, and some other classes
-# run game
-
-BLOCK_SIZE = 40
-BOARD_SIZE = (1000, 800)
-BOARD_COLOR = (185, 185, 185)
-FONT_COLOR = (255, 255, 255)
-
-
+# game objects
 class Resource:
-    def __init__(self, parent_screen):
-        self.parent_screen = parent_screen
-        self.image = pygame.image.load("resources/diamond.png").convert_alpha()
+    def __init__(self):
         self.x = random.randint(10, int(BOARD_SIZE[0] / BLOCK_SIZE) - 11) * BLOCK_SIZE
         self.y = random.randint(8, int(BOARD_SIZE[1] / BLOCK_SIZE) - 9) * BLOCK_SIZE
-
-    def draw(self):
-        self.parent_screen.blit(self.image, (self.x, self.y))
 
     def move(self):
         tmp_x = random.randint(0, int(BOARD_SIZE[0] / BLOCK_SIZE) - 1) * BLOCK_SIZE
@@ -57,18 +22,13 @@ class Resource:
         self.x = tmp_x
         self.y = tmp_y
 
-
 class Snake:
-    def __init__(self, surface):
-        self.parent_screen = surface  # take in and store the screen to be able to refresh it later
-        self.image_head = pygame.image.load("resources/greenhead.png").convert()  # load head image
-        self.image_body = pygame.image.load("resources/greenblock.png").convert()  # load body image
+    def __init__(self):
         self.direction = 'right'
         self.next_direction = 'right'
-
         self.length = 1
-        self.x = [BLOCK_SIZE]  # starting x loc
-        self.y = [BLOCK_SIZE]  # starting y loc
+        self.x = [random.randint(3, int(BOARD_SIZE[0] / BLOCK_SIZE) - 11) * BLOCK_SIZE]
+        self.y = [random.randint(2, int(BOARD_SIZE[1] / BLOCK_SIZE) - 9) * BLOCK_SIZE]
 
     def set_dir_up(self):
         if self.direction != 'down':
@@ -110,103 +70,74 @@ class Snake:
             if self.x[0] >= BOARD_SIZE[0]:
                 self.x[0] -= BOARD_SIZE[0]
 
-        self.draw()
-
     def increase_length(self):
         self.length += 1
         self.x.append(0)  # give it any value, will update next iteration
         self.y.append(0)  # give it any value, will update next iteration
-
-    def draw(self):
-        self.parent_screen.blit(self.image_head, (self.x[0], self.y[0]))  # draw snake head
-        for i in range(1, self.length):
-            self.parent_screen.blit(self.image_body, (self.x[i], self.y[i]))  # draw each body blocks
-
-
+        
 class Game:
     def __init__(self):
-        pygame.init()
-        self.surface = pygame.display.set_mode(BOARD_SIZE)  # create screen with size x, y
-        self.snake = Snake(self.surface)
-        self.snake.draw()
-        self.resource = Resource(self.surface)
-        self.resource.draw()
+        self.p1 = Snake()
+        self.p2 = Snake()
+        self.resource = Resource()
+        self.ready = False
+        self.scores = [0, 0]
+        self.over = False
+    
+    def handle_key_event(self, player_num, key):
+        if player_num == 1:
+            if key == 'u':
+                self.p1.set_dir_up()
+            elif key == 'd':
+                self.p1.set_dir_down()
+            elif key == 'l':
+                self.p1.set_dir_left()
+            elif key == 'r':
+                self.p1.set_dir_right()
+        elif player_num == 2:
+            if key == 'u':
+                self.p2.set_dir_up()
+            elif key == 'd':
+                self.p2.set_dir_down()
+            elif key == 'l':
+                self.p2.set_dir_left()
+            elif key == 'r':
+                self.p2.set_dir_right()
+        else:
+            raise "Invalid player number"
 
-    def is_collision(self, x1, y1, x2, y2):  # can pass snake 2 here, or do it on server side
-        if x1 == x2:
-            if y1 == y2:
-                return True
-        return False
-
-    def reset(self):
-        self.snake = Snake(self.surface)
-        self.resource = Resource(self.surface)
 
     def update(self):
-        self.surface.fill(BOARD_COLOR)  # fill screen with color
-        self.snake.move()  # moves snake and draws it
-        self.resource.draw()  # draw resource
-        self.display_score()
-        pygame.display.flip()  # redraw/refresh UI window here
+        if not self.over:
+            self.p1.move()  # moves snake and draws it
+            self.p2.move() 
 
-        # snake eating resource
-        if self.is_collision(self.snake.x[0], self.snake.y[0], self.resource.x, self.resource.y):
-            self.snake.increase_length()
-            self.resource.move()
+            # snake eating resource
+            if is_collision(self.p1.x[0], self.p1.y[0], self.resource.x, self.resource.y):
+                self.p1.increase_length()
+                self.resource.move()
+                self.scores[0] += 1
+            
+            if is_collision(self.p2.x[0], self.p2.y[0], self.resource.x, self.resource.y):
+                self.p2.increase_length()
+                self.resource.move()
+                self.scores[1] += 1
 
-        # snake colliding with itself
-        for i in range(4, self.snake.length):  # can't collide with itself until at least the 5th element (idx: 4)
-            if self.is_collision(self.snake.x[0], self.snake.y[0], self.snake.x[i], self.snake.y[i]):
-                raise "Collision Occurred!"
+            
+            # snake collide head to head
+            self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[0], self.p2.y[0])
+            if self.over:
+                return
 
-    def display_score(self):
-        font = pygame.font.SysFont('arial', 30)
-        score = font.render(f"Score: {self.snake.length}", True, FONT_COLOR)
-        self.surface.blit(score, (BOARD_SIZE[0] - 150, 10))
-
-    def show_game_over(self):
-        self.surface.fill(BOARD_COLOR)
-        font = pygame.font.SysFont('arial', 30)
-        line1 = font.render(f"Game is over! Your score is {self.snake.length}", True, FONT_COLOR)
-        self.surface.blit(line1, (200, 300))
-        line2 = font.render("To play again press Enter. To exit press Escape!", True, FONT_COLOR)
-        self.surface.blit(line2, (200, 350))
-        pygame.display.flip()
-
-    def run(self):
-        running = True
-        pause = False
-
-        while running:
-            for event in pygame.event.get():
-                if event.type == QUIT:  # exit if close button pressed
-                    running = False
-                if event.type == KEYDOWN:
-                    if event.key == K_ESCAPE:  # exit if esc button pressed
-                        running = False
-                    if event.key == K_RETURN:
-                        # pause = not pause  # can pause the game, disable for multiplayer
-                        pause = False
-                    if not pause:
-                        if event.key == K_UP:
-                            self.snake.set_dir_up()
-                        if event.key == K_DOWN:
-                            self.snake.set_dir_down()
-                        if event.key == K_LEFT:
-                            self.snake.set_dir_left()
-                        if event.key == K_RIGHT:
-                            self.snake.set_dir_right()
-            try:
-                if not pause:
-                    self.update()
-            except Exception as e:
-                self.show_game_over()
-                pause = True
-                self.reset()
-
-            time.sleep(.2)  # wait between updates
-
-
-if __name__ == '__main__':
-    game = Game()
-    game.run()
+            # snake colliding with itself or the body of the other snake
+            for i in range(2, self.p1.length):
+                self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p1.x[i], self.p1.y[i]) or is_collision(self.p2.x[0], self.p2.y[0], self.p1.x[i], self.p1.y[i])
+                if self.over:
+                    return
+            
+            for i in range(2, self.p2.length): 
+                self.over = is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]) or is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[i], self.p2.y[i])
+                if self.over:
+                    return
+        
+        
