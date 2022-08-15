@@ -39,7 +39,6 @@ def client_thread(conn, player):
     player_count -= 1
     del players[player]
     # if 1 player left, start new game
-    print("TRYING")
     game = None if player_count == 0 else Game()
     conn.close()
 
