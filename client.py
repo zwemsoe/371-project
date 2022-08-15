@@ -62,6 +62,10 @@ def draw_grid_lines():
     for y in range(0, BOARD_SIZE[1], BLOCK_SIZE):
         pygame.draw.line(window, LINE_COLOR, (0, y), (BOARD_SIZE[0], y))
 
+def sync_display_state(game, player_id):
+    display_snakes(game)
+    display_resource(game)
+    display_info(game, player_id)
 
 def display_game(game, player_id):
     window.fill(BOARD_COLOR)
@@ -84,7 +88,7 @@ def game_loop():
     net = Network()
     player_id = int(net.id)
     result_message = 'Other player has disconnected.'
-    speed = 0.3
+    speed = 0.4
 
     while not over:
         clock.tick(60)
@@ -97,9 +101,9 @@ def game_loop():
             break
 
         if game.over:
+            sync_display_state(game, player_id)
             result_message = get_result_message(game, player_id)
             show_over(result_message)
-            # over = True
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
