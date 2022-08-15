@@ -1,9 +1,11 @@
 from constants import *
 import random
 
+
 # helpers
 def is_collision(x1, y1, x2, y2):  # can pass snake 2 here, or do it on server side
     return x1 == x2 and y1 == y2
+
 
 # game objects
 class Resource:
@@ -22,13 +24,20 @@ class Resource:
         self.x = tmp_x
         self.y = tmp_y
 
+
 class Snake:
-    def __init__(self):
-        self.direction = 'right'
-        self.next_direction = 'right'
+    def __init__(self, player_num):
         self.length = 1
-        self.x = [random.randint(3, int(BOARD_SIZE[0] / BLOCK_SIZE) - 11) * BLOCK_SIZE]
-        self.y = [random.randint(2, int(BOARD_SIZE[1] / BLOCK_SIZE) - 9) * BLOCK_SIZE]
+        if player_num == 1:
+            self.x = [3 * BLOCK_SIZE]
+            self.y = [3 * BLOCK_SIZE]
+            self.direction = 'right'
+            self.next_direction = 'right'
+        elif player_num == 2:
+            self.x = [(int(BOARD_SIZE[0] / BLOCK_SIZE) - 4) * BLOCK_SIZE]
+            self.y = [(int(BOARD_SIZE[1] / BLOCK_SIZE) - 4) * BLOCK_SIZE]
+            self.direction = 'left'
+            self.next_direction = 'left'
 
     def set_dir_up(self):
         if self.direction != 'down':
@@ -47,7 +56,7 @@ class Snake:
             self.next_direction = 'right'
 
     def move(self):
-        # update body
+        # update body, iterating from the back of the snake
         for i in range(self.length - 1, 0, -1):  # iterate from the back of the snake
             self.x[i] = self.x[i - 1]  # set snake x position to the 1 position closer to the head
             self.y[i] = self.y[i - 1]  # set snake y position to the 1 position closer to the head
@@ -74,16 +83,28 @@ class Snake:
         self.length += 1
         self.x.append(0)  # give it any value, will update next iteration
         self.y.append(0)  # give it any value, will update next iteration
-        
+
+
 class Game:
     def __init__(self):
-        self.p1 = Snake()
-        self.p2 = Snake()
+        self.p1 = Snake(1)
+        self.p2 = Snake(2)
+        self.p1_reset = False
+        self.p2_reset = False
         self.resource = Resource()
         self.ready = False
         self.scores = [0, 0]
         self.over = False
-    
+
+    def reset(self):
+        self.p1 = Snake(1)
+        self.p2 = Snake(2)
+        self.p1_reset = False
+        self.p2_reset = False
+        self.resource = Resource()
+        self.scores = [0, 0]
+        self.over = False
+
     def handle_key_event(self, player_num, key):
         if player_num == 1:
             if key == 'u':
@@ -94,6 +115,8 @@ class Game:
                 self.p1.set_dir_left()
             elif key == 'r':
                 self.p1.set_dir_right()
+            elif key == 'reset' and self.over:
+                self.p1_reset = True
         elif player_num == 2:
             if key == 'u':
                 self.p2.set_dir_up()
@@ -103,14 +126,17 @@ class Game:
                 self.p2.set_dir_left()
             elif key == 'r':
                 self.p2.set_dir_right()
+            elif key == 'reset' and self.over:
+                self.p2_reset = True
         else:
             raise "Invalid player number"
 
-
     def update(self):
-        if not self.over:
+        if self.p1_reset and self.p2_reset:
+            self.reset()
+
+        elif not self.over:
             self.p1.move()  # moves snake and draws it
-            self.p2.move() 
 
             # snake eating resource
             if is_collision(self.p1.x[0], self.p1.y[0], self.resource.x, self.resource.y):
@@ -123,7 +149,6 @@ class Game:
                 self.resource.move()
                 self.scores[1] += 1
 
-            
             # snake collide head to head
             self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[0], self.p2.y[0])
             if self.over:
@@ -139,5 +164,5 @@ class Game:
                 self.over = is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]) or is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[i], self.p2.y[i])
                 if self.over:
                     return
-        
-        
+
+            self.p2.move()
