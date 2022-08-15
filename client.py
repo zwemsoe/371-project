@@ -85,6 +85,7 @@ def game_loop():
     player_id = int(net.id)
     result_message = 'Other player has disconnected.'
     speed = 0.3
+    one_shot = False
 
     while not over:
         clock.tick(60)
@@ -96,10 +97,11 @@ def game_loop():
             print(str(e))
             break
 
-        if game.over:
+        if game.over and not one_shot:
+            display_game(game, player_id)
             result_message = get_result_message(game, player_id)
             show_over(result_message)
-            # over = True
+            one_shot = True
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -120,6 +122,7 @@ def game_loop():
                     net.send('reset')
 
         if not game.over:
+            one_shot = False
             display_game(game, player_id)
 
         time.sleep(speed)
