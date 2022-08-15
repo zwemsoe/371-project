@@ -136,8 +136,22 @@ class Game:
             self.reset()
 
         elif not self.over:
-            self.p1.move()  # moves snake and draws it
+            # snake collide head to head
+            self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[0], self.p2.y[0])
+            if self.over:
+                return
 
+            # snake colliding with itself or the body of the other snake
+            for i in range(1, self.p1.length):
+                self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p1.x[i], self.p1.y[i]) or is_collision(self.p2.x[0], self.p2.y[0], self.p1.x[i], self.p1.y[i])
+                if self.over:
+                    return
+            
+            for i in range(1, self.p2.length): 
+                self.over = is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]) or is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[i], self.p2.y[i])
+                if self.over:
+                    return
+            
             # snake eating resource
             if is_collision(self.p1.x[0], self.p1.y[0], self.resource.x, self.resource.y):
                 self.p1.increase_length()
@@ -149,20 +163,11 @@ class Game:
                 self.resource.move()
                 self.scores[1] += 1
 
-            # snake collide head to head
-            self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[0], self.p2.y[0])
-            if self.over:
-                return
-
-            # snake colliding with itself or the body of the other snake
-            for i in range(2, self.p1.length):
-                self.over = is_collision(self.p1.x[0], self.p1.y[0], self.p1.x[i], self.p1.y[i]) or is_collision(self.p2.x[0], self.p2.y[0], self.p1.x[i], self.p1.y[i])
-                if self.over:
-                    return
-            
-            for i in range(2, self.p2.length): 
-                self.over = is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]) or is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[i], self.p2.y[i])
-                if self.over:
-                    return
-            
+            self.p1.move()  # moves snake and draws it
             self.p2.move()  # moves second snake and draws it
+            
+            
+            
+            
+            
+            

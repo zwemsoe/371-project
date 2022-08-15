@@ -18,9 +18,11 @@ def client_thread(conn, player):
     # send back player id
     conn.send(str.encode(str(player)))
     while True:
+        
         try:
             data = conn.recv(4096).decode()
             print(f"received from {player}: {data}")
+            
             if game.ready:
                 if data != "game_state":
                     if data == 'quit':
@@ -30,6 +32,7 @@ def client_thread(conn, player):
                     game.handle_key_event(player, data)
                 game.update()
             conn.sendall(pickle.dumps(game))
+        
                     
         except Exception as e:
             print("server: something went wrong")

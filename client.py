@@ -62,7 +62,6 @@ def draw_grid_lines():
     for y in range(0, BOARD_SIZE[1], BLOCK_SIZE):
         pygame.draw.line(window, LINE_COLOR, (0, y), (BOARD_SIZE[0], y))
 
-
 def display_game(game, player_id):
     window.fill(BOARD_COLOR)
     if not game.ready:
@@ -84,7 +83,7 @@ def game_loop():
     net = Network()
     player_id = int(net.id)
     result_message = 'Other player has disconnected.'
-    speed = 0.3
+    speed = 0.4
     one_shot = False
 
     while not over:
