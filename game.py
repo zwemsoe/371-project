@@ -109,8 +109,7 @@ class Game:
 
     def update(self):
         if not self.over:
-            self.p1.move()  # moves snake and draws it
-            self.p2.move() 
+            self.p1.move()  # moves first snake and draws it 
 
             # snake eating resource
             if is_collision(self.p1.x[0], self.p1.y[0], self.resource.x, self.resource.y):
@@ -139,5 +138,7 @@ class Game:
                 self.over = is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]) or is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[i], self.p2.y[i])
                 if self.over:
                     return
+            
+            self.p2.move()  # moves second snake and draws it
         
         
