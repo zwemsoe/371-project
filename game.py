@@ -164,5 +164,5 @@ class Game:
                 self.over = is_collision(self.p2.x[0], self.p2.y[0], self.p2.x[i], self.p2.y[i]) or is_collision(self.p1.x[0], self.p1.y[0], self.p2.x[i], self.p2.y[i])
                 if self.over:
                     return
-
-            self.p2.move()
+            
+            self.p2.move()  # moves second snake and draws it
